@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging.Console;
-using task;
-using TestTask.Logging;
-using TestTask.Services;
+using TestTask;
+using TestTask.Infrastructure.Logging;
+using TestTask.Presentation;
 
 var builder = Host.CreateApplicationBuilder(args);
 

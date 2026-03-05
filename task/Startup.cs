@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using TestTask.Data;
-using TestTask.Extensions;
-using TestTask.Repositories;
-using TestTask.Services;
+using TestTask.Infrastructure.Data;
+using TestTask.Presentation.Extensions;
+using TestTask.Domain.Repositories;
+using TestTask.Infrastructure.Repositories;
+using TestTask.Application.Services;
+using TestTask.Infrastructure.Services;
+using TestTask.Presentation;
 
 namespace TestTask;
 
@@ -22,8 +25,8 @@ public class Startup(IConfiguration configuration)
         services.AddScoped<IOfficeRepository, OfficeRepository>();
 
         // Add Services
-        services.AddSingleton<DockerService>();
-        services.AddTransient<ImportService>();
+        services.AddSingleton<IDockerService, DockerService>();
+        services.AddTransient<IImportService, ImportService>();
         services.AddTransient<AppInitializer>();
 
         // Add Quartz
