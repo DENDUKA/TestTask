@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Globalization;
 using TestTask.Domain.Entities;
 using TestTask.Application.DTOs;
 using TestTask.Domain.Repositories;
@@ -58,7 +59,7 @@ public class ImportService(ILogger<ImportService> logger, IOfficeRepository repo
 
             _logger.LogInformation("Загружено {Count} терминалов из JSON", offices.Count);
 
-            await _repository.Update(offices, ct);
+            await _repository.DeleteAndInsert(offices, ct);
         }
         catch (Exception ex)
         {
@@ -66,7 +67,7 @@ public class ImportService(ILogger<ImportService> logger, IOfficeRepository repo
         }
     }
 
-    private static Office MapToOffice(TerminalDto t, CityDto city)
+    internal static Office MapToOffice(TerminalDto t, CityDto city)
     {
         var office = new Office
         {
@@ -77,8 +78,8 @@ public class ImportService(ILogger<ImportService> logger, IOfficeRepository repo
             CountryCode = DefaultCountryCode,
             Coordinates = new Coordinates
             {
-                Latitude = double.TryParse(t.Latitude, out var lat) ? lat : 0,
-                Longitude = double.TryParse(t.Longitude, out var lon) ? lon : 0
+                Latitude = double.TryParse(t.Latitude, CultureInfo.InvariantCulture, out var lat) ? lat : 0,
+                Longitude = double.TryParse(t.Longitude, CultureInfo.InvariantCulture, out var lon) ? lon : 0
             },
             AddressCity = city.Name,
             AddressStreet = t.Address,

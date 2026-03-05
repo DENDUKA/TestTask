@@ -27,7 +27,7 @@ public class Startup(IConfiguration configuration)
         // Add Services
         services.AddSingleton<IDockerService, DockerService>();
         services.AddTransient<IImportService, ImportService>();
-        services.AddTransient<AppInitializer>();
+        services.AddTransient<IAppInitializer, AppInitializer>();
 
         // Add Quartz
         services.AddQuartzServices(Configuration);

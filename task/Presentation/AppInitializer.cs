@@ -8,7 +8,7 @@ public class AppInitializer(
     ILogger<AppInitializer> logger,
     IConfiguration configuration,
     IDockerService dockerService,
-    IServiceProvider serviceProvider)
+    IServiceProvider serviceProvider) : IAppInitializer
 {
     private const string DefaultConnection = "DefaultConnection";
     private const string PostgresDbName = "postgres";

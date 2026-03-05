@@ -16,7 +16,7 @@ var host = builder.Build();
 
 using (var scope = host.Services.CreateScope())
 {
-    var initializer = scope.ServiceProvider.GetRequiredService<AppInitializer>();
+    var initializer = scope.ServiceProvider.GetRequiredService<IAppInitializer>();
     await initializer.Initialize();
 }
 

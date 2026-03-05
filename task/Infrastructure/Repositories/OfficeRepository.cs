@@ -8,7 +8,7 @@ namespace TestTask.Infrastructure.Repositories;public class OfficeRepository(Del
     private readonly DellinDictionaryDbContext _context = context;
     private readonly ILogger<OfficeRepository> _logger = logger;
 
-    public async Task Update(List<Office> offices, CancellationToken ct)
+    public async Task DeleteAndInsert(List<Office> offices, CancellationToken ct)
     {
         using var transaction = await _context.Database.BeginTransactionAsync(ct);
         try

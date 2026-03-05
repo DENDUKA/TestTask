@@ -1,3 +1,6 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/TestTask.Tests/TestTask.Tests.csproj" />
+  </Folder>
   <Project Path="task/task.csproj" />
 </Solution>
