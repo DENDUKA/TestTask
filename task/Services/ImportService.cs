@@ -1,21 +1,20 @@
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using task.Data;
-using task.Entities;
-using task.Entities.Dto;
+using TestTask.Entities;
+using TestTask.Entities.Dto;
+using TestTask.Repositories;
 
-namespace task.Services;
+namespace TestTask.Services;
 
-public class ImportService(ILogger<ImportService> logger, DellinDictionaryDbContext context)
+public class ImportService(ILogger<ImportService> logger, IOfficeRepository repository)
 {
     private const string FilesDirectory = "files";
     private const string TerminalsFile = "terminals.json";
     private const string DefaultCountryCode = "RU";
 
     private readonly ILogger<ImportService> _logger = logger;
-    private readonly DellinDictionaryDbContext _context = context;
+    private readonly IOfficeRepository _repository = repository;
 
-    public async Task ImportAsync(CancellationToken ct = default)
+    public async Task Import(CancellationToken ct = default)
     {
         try
         {
@@ -59,7 +58,7 @@ public class ImportService(ILogger<ImportService> logger, DellinDictionaryDbCont
 
             _logger.LogInformation("Загружено {Count} терминалов из JSON", offices.Count);
 
-            await UpdateDatabaseAsync(offices, ct);
+            await _repository.Update(offices, ct);
         }
         catch (Exception ex)
         {
@@ -67,7 +66,7 @@ public class ImportService(ILogger<ImportService> logger, DellinDictionaryDbCont
         }
     }
 
-    private Office MapToOffice(TerminalDto t, CityDto city)
+    private static Office MapToOffice(TerminalDto t, CityDto city)
     {
         var office = new Office
         {
@@ -100,33 +99,5 @@ public class ImportService(ILogger<ImportService> logger, DellinDictionaryDbCont
         }
 
         return office;
-    }
-
-    private async Task UpdateDatabaseAsync(List<Office> offices, CancellationToken ct)
-    {
-        using var transaction = await _context.Database.BeginTransactionAsync(ct);
-        try
-        {
-            _logger.LogInformation("Очистка старых записей...");
-            
-            // Удаляем данные. Каскадное удаление настроено в DbContext, но ExecuteDelete не вызывает его автоматически.
-            // Поэтому удаляем телефоны явно, чтобы избежать ошибок внешнего ключа, если каскад не сработает на уровне БД.
-            await _context.Phones.ExecuteDeleteAsync(ct);
-            var deletedCount = await _context.Offices.ExecuteDeleteAsync(ct);
-
-            _logger.LogInformation("Удалено {OldCount} старых записей", deletedCount);
-
-            _logger.LogInformation("Сохранение новых терминалов...");
-            _context.Offices.AddRange(offices);
-            await _context.SaveChangesAsync(ct);
-
-            await transaction.CommitAsync(ct);
-            _logger.LogInformation("Сохранено {NewCount} новых терминалов", offices.Count);
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
     }
 }

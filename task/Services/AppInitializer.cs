@@ -1,7 +1,7 @@
 using Npgsql;
-using task.Data;
+using TestTask.Data;
 
-namespace task.Services;
+namespace TestTask.Services;
 
 public class AppInitializer(
     ILogger<AppInitializer> logger,
@@ -19,13 +19,13 @@ public class AppInitializer(
     private readonly DockerService _dockerService = dockerService;
     private readonly IServiceProvider _serviceProvider = serviceProvider;
 
-    public async Task InitializeAsync()
+    public async Task Initialize()
     {
         _logger.LogInformation("Запуск инициализации приложения...");
 
         try
         {
-            await _dockerService.EnsurePostgresContainerRunningAsync();
+            await _dockerService.EnsurePostgresContainerRunning();
             _logger.LogInformation("Docker проверен.");
         }
         catch (Exception ex)
@@ -34,13 +34,13 @@ public class AppInitializer(
             // Продолжаем, возможно БД внешняя
         }
 
-        await EnsureDatabaseExistsAsync();
-        await ApplyMigrationsAsync();
+        await EnsureDatabaseExists();
+        await ApplyMigrations();
 
         _logger.LogInformation("Инициализация завершена.");
     }
 
-    private async Task EnsureDatabaseExistsAsync()
+    private async Task EnsureDatabaseExists()
     {
         var connectionString = _configuration.GetConnectionString(DefaultConnection);
         var builderStr = new NpgsqlConnectionStringBuilder(connectionString);
@@ -77,7 +77,7 @@ public class AppInitializer(
         }
     }
 
-    private async Task ApplyMigrationsAsync()
+    private async Task ApplyMigrations()
     {
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DellinDictionaryDbContext>();

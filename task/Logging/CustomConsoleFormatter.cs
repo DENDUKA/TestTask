@@ -1,9 +1,7 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Options;
 
-namespace task.Logging;
+namespace TestTask.Logging;
 
 public class CustomConsoleFormatter : ConsoleFormatter
 {
@@ -34,6 +32,7 @@ public class CustomConsoleFormatter : ConsoleFormatter
         var time = DateTime.Now.ToString("HH:mm:ss");
         
         // Format: {Time} {Level}: {Message}
+        // Excludes category name (logEntry.Category)
         textWriter.Write($"{time} {logLevel}: {message}");
         
         if (logEntry.Exception != null)

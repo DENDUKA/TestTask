@@ -1,4 +1,4 @@
-namespace task.Entities;
+namespace TestTask.Entities;
 
 public enum OfficeType
 {

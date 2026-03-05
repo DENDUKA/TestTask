@@ -1,8 +1,6 @@
-using System.Text.Json.Serialization;
+namespace TestTask.Entities;
 
-namespace task.Entities;
-
-public class Office
+public record Office
 {
     public int Id { get; set; }
     public string? Code { get; set; }

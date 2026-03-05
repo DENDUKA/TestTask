@@ -1,8 +1,7 @@
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using task.Entities;
+using TestTask.Entities;
 
-namespace task.Data;
+namespace TestTask.Data;
 
 public class DellinDictionaryDbContext(DbContextOptions<DellinDictionaryDbContext> options) : DbContext(options)
 {
@@ -12,7 +11,6 @@ public class DellinDictionaryDbContext(DbContextOptions<DellinDictionaryDbContex
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         
         builder.Entity<Office>()
             .OwnsOne(o => o.Coordinates);

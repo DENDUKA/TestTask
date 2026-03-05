@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 
-namespace task.Entities;
+namespace TestTask.Entities;
 
-public class Phone
+public record Phone
 {
     public int Id { get; set; }
 

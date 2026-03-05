@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 
-namespace task.Entities.Dto;
+namespace TestTask.Entities.Dto;
 
-public class CityDto
+public record CityDto
 {
     [JsonPropertyName("cityID")]
     public int? Id { get; set; }

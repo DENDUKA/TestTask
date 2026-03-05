@@ -1,7 +1,7 @@
 using Quartz;
-using task.Services;
+using TestTask.Services;
 
-namespace task.Jobs;
+namespace TestTask.Jobs;
 
 [DisallowConcurrentExecution]
 public class ImportJob(ILogger<ImportJob> logger, ImportService importService) : IJob
@@ -15,7 +15,7 @@ public class ImportJob(ILogger<ImportJob> logger, ImportService importService) :
 
         try
         {
-            await _importService.ImportAsync(context.CancellationToken);
+            await _importService.Import(context.CancellationToken);
         }
         catch (Exception ex)
         {

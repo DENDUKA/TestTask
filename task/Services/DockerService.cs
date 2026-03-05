@@ -1,10 +1,8 @@
 using System.Net.Sockets;
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 
-namespace task.Services;
+namespace TestTask.Services;
 
 public class DockerService
 {
@@ -42,7 +40,7 @@ public class DockerService
         _client = new DockerClientConfiguration(dockerUri).CreateClient();
     }
 
-    public async Task EnsurePostgresContainerRunningAsync()
+    public async Task EnsurePostgresContainerRunning()
     {
         var settings = _configuration.GetSection(ConfigSection);
         var containerName = settings[ContainerNameKey] ?? DefaultContainerName;
@@ -70,7 +68,7 @@ public class DockerService
 
             if (existingContainer == null)
             {
-                await CreateAndStartContainerAsync(containerName, image, password, hostPort);
+                await CreateAndStartContainer(containerName, image, password, hostPort);
             }
             else if (existingContainer.State != ContainerStateRunning)
             {
@@ -83,7 +81,7 @@ public class DockerService
                 _logger.LogInformation("Контейнер '{ContainerName}' уже запущен.", containerName);
             }
 
-            await WaitForPostgresAsync(Localhost, port);
+            await WaitForPostgres(Localhost, port);
         }
         catch (Exception ex)
         {
@@ -91,7 +89,7 @@ public class DockerService
         }
     }
 
-    private async Task CreateAndStartContainerAsync(string containerName, string image, string password, string hostPort)
+    private async Task CreateAndStartContainer(string containerName, string image, string password, string hostPort)
     {
         _logger.LogInformation("Контейнер '{ContainerName}' не найден. Создание нового...", containerName);
 
@@ -117,7 +115,7 @@ public class DockerService
         {
             Image = image,
             Name = containerName,
-            Env = new List<string> { $"POSTGRES_PASSWORD={password}" },
+            Env = [$"POSTGRES_PASSWORD={password}"],
             HostConfig = new HostConfig
             {
                 PortBindings = new Dictionary<string, IList<PortBinding>>
@@ -132,7 +130,7 @@ public class DockerService
         _logger.LogInformation("Контейнер '{ContainerName}' запущен.", containerName);
     }
 
-    private async Task WaitForPostgresAsync(string host, int port)
+    private async Task WaitForPostgres(string host, int port)
     {
         _logger.LogInformation("Ожидание готовности PostgreSQL на порту {Port}...", port);
         

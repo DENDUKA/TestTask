@@ -1,7 +1,7 @@
 using Quartz;
-using task.Jobs;
+using TestTask.Jobs;
 
-namespace task.Extensions;
+namespace TestTask.Extensions;
 
 public static class ServiceCollectionExtensions
 {

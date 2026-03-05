@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using Quartz;
-using task.Data;
-using task.Extensions;
-using task.Jobs;
-using task.Services;
+using TestTask.Data;
+using TestTask.Extensions;
+using TestTask.Repositories;
+using TestTask.Services;
 
-namespace task;
+namespace TestTask;
 
 public class Startup(IConfiguration configuration)
 {
@@ -18,6 +17,9 @@ public class Startup(IConfiguration configuration)
         // Add DbContext
         services.AddDbContext<DellinDictionaryDbContext>(options =>
             options.UseNpgsql(Configuration.GetConnectionString(DefaultConnectionName)));
+
+        // Add Repositories
+        services.AddScoped<IOfficeRepository, OfficeRepository>();
 
         // Add Services
         services.AddSingleton<DockerService>();

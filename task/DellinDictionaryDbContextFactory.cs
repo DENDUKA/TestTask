@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.Configuration;
-using task.Data;
+using TestTask.Data;
 
-namespace task;
+namespace TestTask;
 
 public class DellinDictionaryDbContextFactory : IDesignTimeDbContextFactory<DellinDictionaryDbContext>
 {

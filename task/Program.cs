@@ -1,8 +1,7 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using task;
-using task.Logging;
-using task.Services;
+using TestTask.Logging;
+using TestTask.Services;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -18,7 +17,7 @@ var host = builder.Build();
 using (var scope = host.Services.CreateScope())
 {
     var initializer = scope.ServiceProvider.GetRequiredService<AppInitializer>();
-    await initializer.InitializeAsync();
+    await initializer.Initialize();
 }
 
 try 
