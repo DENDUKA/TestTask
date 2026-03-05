@@ -3,7 +3,6 @@ using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-using System.Runtime.InteropServices;
 
 namespace task.Services;
 
@@ -21,7 +20,6 @@ public class DockerService
     private const string DefaultPassword = "postgres";
     
     private const string DockerPipeWindows = "npipe://./pipe/docker_engine";
-    private const string DockerSocketUnix = "unix:///var/run/docker.sock";
     private const string PostgresPortBinding = "5432/tcp";
     private const string ContainerStateRunning = "running";
     private const string ImageFilterReference = "reference";
@@ -39,10 +37,7 @@ public class DockerService
         _logger = logger;
         _configuration = configuration;
         
-        // Определяем URI Docker в зависимости от ОС
-        var dockerUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? new Uri(DockerPipeWindows)
-            : new Uri(DockerSocketUnix);
+        var dockerUri = new Uri(DockerPipeWindows);
             
         _client = new DockerClientConfiguration(dockerUri).CreateClient();
     }
@@ -52,7 +47,7 @@ public class DockerService
         var settings = _configuration.GetSection(ConfigSection);
         var containerName = settings[ContainerNameKey] ?? DefaultContainerName;
         var image = settings[ImageKey] ?? DefaultImage;
-        var port = settings.GetValue<int>(PortKey, DefaultPort);
+        var port = settings.GetValue(PortKey, DefaultPort);
         var password = settings[PasswordKey] ?? DefaultPassword;
         var hostPort = port.ToString();
 
