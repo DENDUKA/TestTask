@@ -17,7 +17,7 @@ public class Office
     public string? AddressHouseNumber { get; set; }
     public int? AddressApartment { get; set; }
     public string WorkTime { get; set; } = string.Empty;
-    public List<Phone> Phones { get; set; } = new();
+    public List<Phone> Phones { get; set; } = [];
 
     public Office() { }
 }
