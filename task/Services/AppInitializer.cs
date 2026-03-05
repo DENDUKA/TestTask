@@ -43,31 +43,37 @@ public class AppInitializer(
     private async Task EnsureDatabaseExistsAsync()
     {
         var connectionString = _configuration.GetConnectionString(DefaultConnection);
-        try
+        var builderStr = new NpgsqlConnectionStringBuilder(connectionString);
+        var dbName = builderStr.Database;
+        builderStr.Database = PostgresDbName; // Подключаемся к postgres для создания БД
+
+        while (true)
         {
-            var builderStr = new NpgsqlConnectionStringBuilder(connectionString);
-            var dbName = builderStr.Database;
-            builderStr.Database = PostgresDbName; // Подключаемся к postgres для создания БД
-            
-            using var conn = new NpgsqlConnection(builderStr.ConnectionString);
-            await conn.OpenAsync();
-            
-            var existsCmd = conn.CreateCommand();
-            existsCmd.CommandText = string.Format(CheckDbExistsQuery, dbName);
-            var exists = await existsCmd.ExecuteScalarAsync();
-            
-            if (exists == null)
+            try
             {
-                _logger.LogInformation("База данных {DbName} не найдена. Создание...", dbName);
-                var createCmd = conn.CreateCommand();
-                createCmd.CommandText = string.Format(CreateDbCommand, dbName);
-                await createCmd.ExecuteNonQueryAsync();
-                _logger.LogInformation("База данных {DbName} создана.", dbName);
+                using var conn = new NpgsqlConnection(builderStr.ConnectionString);
+                await conn.OpenAsync();
+
+                var existsCmd = conn.CreateCommand();
+                existsCmd.CommandText = string.Format(CheckDbExistsQuery, dbName);
+                var exists = await existsCmd.ExecuteScalarAsync();
+
+                if (exists == null)
+                {
+                    _logger.LogInformation("База данных {DbName} не найдена. Создание...", dbName);
+                    var createCmd = conn.CreateCommand();
+                    createCmd.CommandText = string.Format(CreateDbCommand, dbName);
+                    await createCmd.ExecuteNonQueryAsync();
+                    _logger.LogInformation("База данных {DbName} создана.", dbName);
+                }
+
+                return;
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Ошибка при проверке/создании БД: {Message}", ex.Message);
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Не удалось подключиться к БД или создать её: {Message}. Повторная попытка через 5 сек...", ex.Message);
+                await Task.Delay(5000);
+            }
         }
     }
 

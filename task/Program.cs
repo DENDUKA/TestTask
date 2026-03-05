@@ -1,7 +1,14 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using task;
+using task.Logging;
 using task.Services;
 
 var builder = Host.CreateApplicationBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole(options => options.FormatterName = "custom");
+builder.Logging.AddConsoleFormatter<CustomConsoleFormatter, ConsoleFormatterOptions>();
 
 var startup = new Startup(builder.Configuration);
 startup.ConfigureServices(builder.Services);

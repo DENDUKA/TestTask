@@ -63,7 +63,7 @@ public class ImportService(ILogger<ImportService> logger, DellinDictionaryDbCont
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка импорта: {Message}", ex.Message);
+            _logger.LogError(ex, "Ошибка импорта: {Exception}", ex.Message);
         }
     }
 
@@ -114,7 +114,7 @@ public class ImportService(ILogger<ImportService> logger, DellinDictionaryDbCont
             await _context.Phones.ExecuteDeleteAsync(ct);
             var deletedCount = await _context.Offices.ExecuteDeleteAsync(ct);
 
-            _logger.LogInformation("Удалено {OldCount} старых записей офисов", deletedCount);
+            _logger.LogInformation("Удалено {OldCount} старых записей", deletedCount);
 
             _logger.LogInformation("Сохранение новых терминалов...");
             _context.Offices.AddRange(offices);

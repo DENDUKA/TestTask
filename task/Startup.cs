@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 using task.Data;
+using task.Extensions;
 using task.Jobs;
 using task.Services;
 
@@ -24,25 +25,6 @@ public class Startup(IConfiguration configuration)
         services.AddTransient<AppInitializer>();
 
         // Add Quartz
-        services.AddQuartz(q =>
-        {
-            var jobKey = new JobKey("ImportJob");
-            q.AddJob<ImportJob>(opts => opts.WithIdentity(jobKey));
-
-            // Trigger 1: Run immediately on startup
-            q.AddTrigger(opts => opts
-                .ForJob(jobKey)
-                .WithIdentity("ImportJob-trigger-now")
-                .StartNow());
-
-            // Trigger 2: Run on schedule
-            var cronSchedule = Configuration["CronSettings:Schedule"] ?? "0 2 * * *";
-            q.AddTrigger(opts => opts
-                .ForJob(jobKey)
-                .WithIdentity("ImportJob-trigger-cron")
-                .WithCronSchedule(cronSchedule));
-        });
-
-        services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+        services.AddQuartzServices(Configuration);
     }
 }
