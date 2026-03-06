@@ -13,6 +13,12 @@ public class DellinDictionaryDbContext(DbContextOptions<DellinDictionaryDbContex
         base.OnModelCreating(builder);
         
         builder.Entity<Office>()
+            .HasIndex(o => o.Code); // Index for Code
+
+        builder.Entity<Office>()
+            .HasIndex(o => o.CityCode); // Index for CityCode
+
+        builder.Entity<Office>()
             .OwnsOne(o => o.Coordinates);
 
         builder.Entity<Office>()

@@ -1,127 +1,85 @@
-# ТЗ
+# Импорт справочника терминалов
 
-Реализовать справочник терминалов.
+Сервис для периодического импорта данных о терминалах из JSON-файла в базу данных PostgreSQL. Реализован как фоновая задача (BackgroundService) с использованием Quartz.NET.
 
-## Задача
+## 🚀 Реализованный функционал
 
-Создать фоновую службу (BackgroundService) для периодической загрузки справочника терминалов из JSON файла и сохранения данных в PostgreSQL
+### 1. Импорт данных
+- **Источник:** JSON-файл (`Infrastructure/Files/terminals.json`).
+- **Десериализация:** Используется `System.Text.Json` в режиме `PropertyNameCaseInsensitive = true`.
+- **Периодичность:** Запуск ежедневно в **02:00 MSK** (учитывается часовой пояс, независимо от системного времени сервера).
+- **Стратегия обновления:** Полная замена данных (Full Replace) в рамках одной транзакции:
+  1. Удаление всех существующих записей (телефонов и офисов).
+  2. Массовая вставка (Bulk Insert) новых данных.
+  3. Если файл пуст или невалиден, старые данные не удаляются.
 
-### Технический стек
+### 2. Производительность и оптимизация
+- **Bulk Operations:** Используется `EF Core Batching` (`AddRangeAsync`) для эффективной вставки большого количества связанных данных (Офисы + Телефоны).
+- **Индексы:** Добавлены индексы БД для полей `Code` и `CityCode` для ускорения выборок (миграция `AddIndexes`).
+- **Скорость:** Время полного цикла импорта (чтение + парсинг + замена в БД) для ~300 записей составляет менее **1 секунды**.
 
-- Язык: C# 13 (.NET 9)
-- Платформа: ASP.NET Core 9 (Hosted Service, без Web API)
-- ORM: Entity Framework Core 9 (PostgreSQL)
-- DI: Microsoft.Extensions.DependencyInjection
-- Логирование: ILogger (структурированные логи)
+### 3. Инфраструктура
+- **Docker:** Автоматическое развертывание контейнера `postgres:latest` при старте приложения.
+- **Миграции:** Автоматическое применение миграций EF Core при запуске.
+- **Логирование:** Структурированное логирование всех этапов (Start, Parse, DB Operations, Error).
+- **Graceful Shutdown:** Корректная обработка остановки приложения (ожидание завершения активных джобов).
 
-## Источник данных
+## 🛠 Технический стек
 
-Файл:  ~/files/terminals.json
-Расположение: Корневая папка приложения /files/
-Формат: JSON массив объектов терминалов
+- **Платформа:** .NET 9 (Console Application / Worker Service)
+- **Планировщик:** Quartz.NET
+- **База данных:** PostgreSQL
+- **ORM:** Entity Framework Core 9
+- **Контейнеризация:** Docker.DotNet (для управления контейнерами из кода)
 
-### Сущности и DbContext
+## ⚙️ Настройка и запуск
 
-DbContext
+### Предварительные требования
+- .NET 9 SDK
+- Docker Desktop (должен быть запущен)
 
-```csharp
-public class DellinDictionaryDbContext : DbContext
+### Конфигурация (`appsettings.json`)
+```json
 {
-    public DbSet<Office> Offices { get; set; }
-    
-    protected override void OnModelCreating(ModelBuilder builder)
-    {
-        base.OnModelCreating(builder);
-        builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-    }
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=dellin_dictionary;Username=postgres;Password=postgres"
+  },
+  "CronSettings": {
+    "Schedule": "0 0 2 * * ?" 
+  },
+  "DockerSettings": {
+    "ContainerName": "postgres-db",
+    "Image": "postgres:latest",
+    "Port": 5432,
+    "Password": "postgres"
+  }
 }
 ```
 
-Office (терминал)
-
-```csharp
-public class Office
-{
-    public int Id { get; set; }
-    public string? Code { get; set; }
-    public int CityCode { get; set; }
-    public string? Uuid { get; set; }
-    public OfficeType? Type { get; set; }
-    public string CountryCode { get; set; }
-    public Coordinates Coordinates { get; set; }
-    public string? AddressRegion { get; set; }
-    public string? AddressCity { get; set; }
-    public string? AddressStreet { get; set; }
-    public string? AddressHouseNumber { get; set; }
-    public int? AddressApartment { get; set; }
-    public string WorkTime { get; set; }
-    public Phone Phones { get; set; }
-    public Office() { }
-}
+### Запуск
+```bash
+dotnet run --project task/TestTask.csproj
 ```
 
-```csharp
-public class Phone
-{
-    public int Id { get; set; }
+При первом запуске приложение:
+1. Проверит и запустит Docker-контейнер с PostgreSQL.
+2. Создаст базу данных `dellin_dictionary`.
+3. Применит миграции (создаст таблицы и индексы).
+4. Запустит задачу импорта (сразу при старте + запланирует на 02:00 MSK).
 
-    public int OfficeId { get; set; }
+## 📊 Структура БД
 
-    public string PhoneNumber { get; set; }
+### Таблица `Offices`
+- `Id` (PK)
+- `Code` (Indexed) - Код терминала
+- `CityCode` (Indexed) - Код города
+- `Type` - Тип (PVZ / WAREHOUSE)
+- `Coordinates` (Owned Type) - Широта/Долгота
+- `Address...` - Адресные поля
+- `WorkTime` - Время работы
 
-    public string? Additional { get; set; }
-
-    public Office Office { get; set; }
-}
-```
-
-```csharp
-public class Coordinates
-{
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-}
-```
-
-```csharp
-public enum OfficeType
-{
-    PVZ,
-    POSTAMAT,
-    WAREHOUSE
-}
-```
-
-### Функциональные требования
-
-- Периодичность - ежедневно в 02:00 MSK
-- Загрузка JSON - Чтение ~/files/terminals.json.
-- Десериализация - JsonSerializer с case-insensitive (System.Text.Json).
-- Очистка данных - Удаление существующих записей в БД.
-- Импорт данных - Bulk insert новых терминалов.
-- Индексы в БД.
-- Логирование - Структурированные логи всех операций.
-- Обработка ошибок.
-
-#### Пример логов
-
-```log
-{Time} INFO: Загружено {Count} терминалов из JSON
-{Time} INFO: Удалено {OldCount} старых записей
-{Time} INFO: Сохранено {NewCount} новых терминалов
-{Time} ERROR: Ошибка импорта: {Exception}
-```
-
-### Нефункциональные требования
-
-Время импорта < 5 минут
-
-## Критерии приемки
-
-- BackgroundService запускается и работает стабильно
-- Данные корректно импортируются из JSON в PostgreSQL
-- Структурированные логи в консоли
-- Время импорта < 5 мин
-- Graceful shutdown при остановке
-- Обработка ошибок без краха сервиса
-- Таблица  offices  содержит актуальные данные
+### Таблица `Phones`
+- `Id` (PK)
+- `OfficeId` (FK) - Ссылка на офис
+- `PhoneNumber` - Номер
+- `Additional` - Дополнительная информация

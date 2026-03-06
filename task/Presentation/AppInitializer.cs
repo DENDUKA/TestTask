@@ -1,4 +1,5 @@
 using Npgsql;
+using Microsoft.EntityFrameworkCore;
 using TestTask.Infrastructure.Data;
 using TestTask.Infrastructure.Services;
 
@@ -84,12 +85,12 @@ public class AppInitializer(
         var db = scope.ServiceProvider.GetRequiredService<DellinDictionaryDbContext>();
         try
         {
-            await db.Database.EnsureCreatedAsync();
-            _logger.LogInformation("База данных успешно инициализирована (схема создана).");
+            await db.Database.MigrateAsync();
+            _logger.LogInformation("Миграции базы данных успешно применены.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка при инициализации схемы БД: {Message}", ex.Message);
+            _logger.LogError(ex, "Ошибка при применении миграций: {Message}", ex.Message);
         }
     }
 }

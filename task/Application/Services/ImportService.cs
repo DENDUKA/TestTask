@@ -15,6 +15,11 @@ public class ImportService(ILogger<ImportService> logger, IOfficeRepository repo
     private readonly ILogger<ImportService> _logger = logger;
     private readonly IOfficeRepository _repository = repository;
 
+    private readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     public async Task Import(CancellationToken ct = default)
     {
         try
@@ -26,40 +31,38 @@ public class ImportService(ILogger<ImportService> logger, IOfficeRepository repo
                 return;
             }
 
-            _logger.LogInformation("Чтение файла {FilePath}...", filePath);
+            _logger.LogInformation("Начало импорта из файла {FilePath}...", filePath);
 
-            RootDto? root;
-            await using (var fileStream = File.OpenRead(filePath))
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-                root = await JsonSerializer.DeserializeAsync<RootDto>(fileStream, options, ct);
-            }
+            using var fileStream = File.OpenRead(filePath);
+            var root = await JsonSerializer.DeserializeAsync<RootDto>(fileStream, _jsonOptions, ct);
 
             if (root?.City == null)
             {
-                _logger.LogWarning("JSON пуст или имеет неверную структуру.");
+                _logger.LogWarning("Файл пуст или имеет неверный формат.");
                 return;
             }
 
-            var offices = new List<Office>();
-
+            var allOffices = new List<Office>();
             foreach (var city in root.City)
             {
-                if (city.Terminals?.Terminal == null) continue;
-
-                foreach (var t in city.Terminals.Terminal)
+                if (city.Terminals?.Terminal != null)
                 {
-                    var office = MapToOffice(t, city);
-                    offices.Add(office);
+                    foreach (var t in city.Terminals.Terminal)
+                    {
+                        var office = MapToOffice(t, city);
+                        allOffices.Add(office);
+                    }
                 }
             }
 
-            _logger.LogInformation("Загружено {Count} терминалов из JSON", offices.Count);
-
-            await _repository.DeleteAndInsert(offices, ct);
+            if (allOffices.Count > 0)
+            {
+                await _repository.ReplaceAll(allOffices, ct);
+            }
+            else
+            {
+                _logger.LogWarning("Нет данных для импорта.");
+            }
         }
         catch (Exception ex)
         {

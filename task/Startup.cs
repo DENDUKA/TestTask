@@ -19,7 +19,8 @@ public class Startup(IConfiguration configuration)
     {
         // Add DbContext
         services.AddDbContext<DellinDictionaryDbContext>(options =>
-            options.UseNpgsql(Configuration.GetConnectionString(DefaultConnectionName)));
+            options.UseNpgsql(Configuration.GetConnectionString(DefaultConnectionName),
+                npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
 
         // Add Repositories
         services.AddScoped<IOfficeRepository, OfficeRepository>();

@@ -20,8 +20,6 @@ public class ImportJob(ILogger<ImportJob> logger, IImportService importService) 
         catch (Exception ex)
         {
             _logger.LogError(ex, "Ошибка выполнения Quartz Job");
-            // В зависимости от требований, можно выбросить JobExecutionException
-            // throw new JobExecutionException(ex);
         }
 
         _logger.LogInformation("Завершение Quartz Job: {JobKey} в {Time}", context.JobDetail.Key, DateTimeOffset.Now);

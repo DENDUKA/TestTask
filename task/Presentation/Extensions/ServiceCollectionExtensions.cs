@@ -22,10 +22,30 @@ public static class ServiceCollectionExtensions
             var cronSchedule = configuration["CronSettings:Schedule"];
             if (!string.IsNullOrEmpty(cronSchedule))
             {
+                TimeZoneInfo timeZone;
+                try
+                {
+                    // For Linux/Docker
+                    timeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Moscow");
+                }
+                catch
+                {
+                    try
+                    {
+                        // For Windows
+                        timeZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
+                    }
+                    catch
+                    {
+                        // Fallback to Local
+                        timeZone = TimeZoneInfo.Local;
+                    }
+                }
+
                 q.AddTrigger(opts => opts
                     .ForJob(jobKey)
                     .WithIdentity("ImportJob-trigger-cron")
-                    .WithCronSchedule(cronSchedule));
+                    .WithCronSchedule(cronSchedule, x => x.InTimeZone(timeZone)));
             }
         });
 
